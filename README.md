@@ -18,6 +18,7 @@ Superroute print node — with one engine on every platform.
 | .NET (Windows, macOS, Linux) | `dotnet add package Superroute.SPrint` |
 | Python (Linux, macOS, Windows) | `pip install superroute-sprint` |
 | C / C++, Go through cgo (Linux, Raspberry Pi, macOS, Windows) | the `sprint-<version>-<os>-<arch>` archives of each [release](https://github.com/Goodneo-Solutions/sprint-releases/releases) |
+| Browser (WebAssembly: Chrome, Edge) | `sprint.wasm` and `sprint.js` of each [release](https://github.com/Goodneo-Solutions/sprint-releases/releases) |
 
 ### Android
 
@@ -49,6 +50,17 @@ let result = try printers.print(PrintJob(type: JobType.label, label: label))
 char *res = sprint_print("{\"name\":\"Labels\",\"host\":\"192.168.1.40\",\"transport\":\"network\",\"language\":\"zpl\"}",
                          "{\"type\":\"raw\",\"data\":\"XlhBXlha\"}");
 sprint_free(res);
+```
+
+### Browser
+
+```js
+import { load, web } from './sprint.js';           // sprint.wasm next to it, served as application/wasm
+const sprint = await load();
+const bytes = sprint.encodeLabel({ language: 'tspl', dpi: 203 }, labelJson);
+const preview = sprint.renderLabel(labelJson, 203);  // { width, height, png }
+const printer = await web.bluetooth.request();       // from a click; also web.usb, web.serial
+await printer.write(bytes);
 ```
 
 ### Go (cgo over the C library)

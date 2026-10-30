@@ -1,3 +1,13 @@
+# 0.1.1
+
+## Printing
+
+### C
+- **C library**: Visual C++ can link the Windows library directly.
+
+### Browser
+- **sPrint in the browser**: encode labels in every printer language, preview them, encode image pages and work out a printer's language in the browser, and print to Bluetooth LE, USB and serial printers from Chrome and Edge.
+
 # 0.1.0
 
 ## Printing
