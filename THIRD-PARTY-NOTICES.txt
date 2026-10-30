@@ -1,0 +1,24 @@
+Third-party software shipped with sPrint for Windows
+=====================================================
+
+sPrint itself is licensed under the Superroute SDK License
+(https://open.superroute.ca/developer/license). The program below is not part
+of sPrint: it is a separate program, distributed next to sPrint unmodified and
+under its own licence, which sPrint starts as a separate process to print PDF
+documents to a Windows printer driver.
+
+SumatraPDF 3.5.2 (SumatraPDF.exe, 64-bit)
+  Copyright (C) SumatraPDF project authors.
+  Licence: GNU General Public License, version 3 — the full text is in
+  licenses/SumatraPDF-GPL-3.0.txt (copied from the project's COPYING file at
+  this version).
+  Source code of this exact version:
+    https://github.com/sumatrapdfreader/sumatrapdf/tree/3.5.2rel
+    https://github.com/sumatrapdfreader/sumatrapdf/archive/refs/tags/3.5.2rel.tar.gz
+  Binary obtained from:
+    https://www.sumatrapdfreader.org/dl/rel/3.5.2/SumatraPDF-3.5.2-64.zip
+    (SHA-256 of the zip 66ccb395c9184dce6822dfbb9970c877383b3ead6d9417b5106a844aac512989)
+  Home page: https://www.sumatrapdfreader.org
+
+blepair.exe, also shipped beside sPrint on Windows, is Superroute's own BLE
+bonding helper under the Superroute SDK License.

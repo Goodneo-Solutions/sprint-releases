@@ -1,0 +1,37 @@
+# Written by sPrint's release workflow (its tools/release/releases-repo); edit it there.
+#
+# sPrint's release workflow pushes the release's commit to main and then the
+# release's binaries to the branch upload/<version> (with release.json: the
+# version and the main commit). This turns that branch into the GitHub Release
+# <version> on that commit — which creates the tag the Swift package is
+# resolved by — with the binaries as its assets, and deletes the branch.
+name: publish release
+
+on:
+  push:
+    branches: ['upload/**']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(jq -r .version release.json)
+          target=$(jq -r .target release.json)
+          [ "upload/$version" = "$GITHUB_REF_NAME" ] || { echo "branch $GITHUB_REF_NAME does not match $version"; exit 1; }
+          files=$(ls *.zip *.tar.gz *.whl SHA256SUMS.txt THIRD-PARTY-NOTICES.txt 2>/dev/null)
+          if gh release view "$version" >/dev/null 2>&1; then
+            gh release upload "$version" $files --clobber
+          else
+            gh release create "$version" $files --target "$target" --title "sPrint $version" \
+              --notes "sPrint $version: the Swift package (macOS, iOS), the C library for macOS, Linux, Raspberry Pi and Windows (with sprint.h), and the Python wheels. Android: Maven repository https://goodneo-solutions.github.io/sprint-releases/maven; .NET: Superroute.SPrint on nuget.org; Flutter: sprint_flutter on pub.dev; Python: superroute-sprint on PyPI. SumatraPDF (Windows) is a separate GPLv3 program: THIRD-PARTY-NOTICES.txt. Changes: CHANGELOG.md."
+          fi
+      - name: Delete the upload branch
+        run: git push origin --delete "$GITHUB_REF_NAME"
