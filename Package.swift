@@ -1,5 +1,5 @@
 // swift-tools-version: 6.0
-// sPrint 0.1.1 — written by sPrint's release workflow.
+// sPrint 0.1.2 — written by sPrint's release workflow.
 import PackageDescription
 
 let package = Package(
@@ -11,8 +11,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "CSPrint",
-            url: "https://github.com/Goodneo-Solutions/sprint-releases/releases/download/0.1.1/CSPrint.xcframework.zip",
-            checksum: "84d0287a8d544cf979c7d5a59f0112264c72f127a1058490627d5edc7801ced2"
+            url: "https://github.com/Goodneo-Solutions/sprint-releases/releases/download/0.1.2/CSPrint.xcframework.zip",
+            checksum: "8783b72f2a46fbfb8151f9bceb7183045615bba283ca858c1f61af20024e0a98"
         ),
         .target(name: "SPrint", dependencies: ["CSPrint"], path: "Sources/SPrint"),
     ],

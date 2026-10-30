@@ -1,0 +1,110 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "ca.superroute",
+    "module": "sprint",
+    "version": "0.1.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "ca.superroute",
+          "module": "sprint-core",
+          "version": {
+            "requires": "0.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "sprint-0.1.2.aar",
+          "url": "sprint-0.1.2.aar",
+          "size": 235663,
+          "sha512": "1e07ceee1c0a2b676a7950d5bc590d029b8dbb20a5ed26193f6eef265547c2022d8948611ce37daf103f4c8b79d945a4cb6df5e1a07ce8b18cbe8666213f7e4d",
+          "sha256": "60d8be36aa764a3fec8d069f4adeb2cb7e12d91a79ccd4df2c3a21a7061ff9c7",
+          "sha1": "45291a641a3d9711f69ec4049e5582f64d70ab79",
+          "md5": "05e2b2ed78d3e29003d488d7040295d8"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "ca.superroute",
+          "module": "sprint-core",
+          "version": {
+            "requires": "0.1.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "sprint-0.1.2.aar",
+          "url": "sprint-0.1.2.aar",
+          "size": 235663,
+          "sha512": "1e07ceee1c0a2b676a7950d5bc590d029b8dbb20a5ed26193f6eef265547c2022d8948611ce37daf103f4c8b79d945a4cb6df5e1a07ce8b18cbe8666213f7e4d",
+          "sha256": "60d8be36aa764a3fec8d069f4adeb2cb7e12d91a79ccd4df2c3a21a7061ff9c7",
+          "sha1": "45291a641a3d9711f69ec4049e5582f64d70ab79",
+          "md5": "05e2b2ed78d3e29003d488d7040295d8"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "sprint-0.1.2-sources.jar",
+          "url": "sprint-0.1.2-sources.jar",
+          "size": 40436,
+          "sha512": "7299d890c118aa70ff2c5a437ee932c094a7fd918dc4947848788f25f2d0878a6e3805cbddaabedc804962b5bc11a711ecb71ac4a17d187670beb6bf30c139e2",
+          "sha256": "123a0f7145d25a3aab03cd38850f98159a19779f5851b0e9ae0d32d754d4e861",
+          "sha1": "0d155db8f18daeebaddda8abf4d0872bf32fb61d",
+          "md5": "ed1f0d8c7488afef0b9e85c7bc95cfb0"
+        }
+      ]
+    }
+  ]
+}

@@ -153,14 +153,25 @@ private let renderCallback: sprint_render_cb = { kind, data, len, baseURL, width
 /// The platform layer the core uses on Apple devices.
 public enum NativeLayer {
     /// Registers the page renderer (PDF through Core Graphics, HTML through
-    /// WebKit) and, on iOS, the Bluetooth LE transport (CoreBluetooth) with the
+    /// WebKit) and, on iOS, the Bluetooth LE transport (CoreBluetooth) and the
+    /// mDNS browser and advertiser of LAN peer printing (Bonjour) with the
     /// core. Call once at start-up. On macOS the core keeps its own Bluetooth,
-    /// BLE and USB transports; the renderer replaces its headless-browser one.
+    /// BLE and USB transports and its own mDNS (see ``useBonjourForPeers(_:)``);
+    /// the renderer replaces its headless-browser one.
     /// Print from a background task: HTML is drawn on the main thread.
     public static func register() {
         _ = sprint_set_renderer(renderCallback, nil)
         #if os(iOS)
         BLETransport.register()
+        BonjourMDNS.register(true)
         #endif
+    }
+
+    /// Browses and advertises LAN peers through Bonjour (true) or through the
+    /// core's own mDNS (false; macOS only — iOS has no other). iOS uses
+    /// Bonjour from ``register()``; a sandboxed macOS app may prefer it too,
+    /// as the system's mDNS service then does the multicast.
+    public static func useBonjourForPeers(_ on: Bool = true) {
+        BonjourMDNS.register(on)
     }
 }

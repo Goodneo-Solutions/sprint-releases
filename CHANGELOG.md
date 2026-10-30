@@ -1,3 +1,10 @@
+# 0.1.2
+
+## Printing
+
+### Every package except the browser
+- **LAN peer printing**: share chosen printers with other devices on the same network and print to theirs, with no server involved. Sharing is off until it is turned on and nothing is shared until each printer is chosen; peers are let in openly, with a password or after approval, approved devices are kept on a trust list that can be revoked at any time, and every device is checked by its own key. Devices find each other on the network, and a connected device's printers can be added to the printer list so print node jobs reach them. Works with SuperPrinter devices on the same network.
+
 # 0.1.1
 
 ## Printing

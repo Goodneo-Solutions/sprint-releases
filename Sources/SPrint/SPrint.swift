@@ -4,7 +4,16 @@ import Foundation
 /// An error sPrint reported.
 public struct SPrintError: Error, Sendable, CustomStringConvertible {
     public let message: String
+    /// A machine-readable code when there is one: a peer's refusal
+    /// (BAD_PASSWORD, THROTTLED, NOT_AUTHORIZED, …), or "denied" / "timeout"
+    /// from ``PeerSession/waitApproval(timeout:)``.
+    public var code: String?
     public var description: String { message }
+
+    init(message: String, code: String? = nil) {
+        self.message = message
+        self.code = code
+    }
 }
 
 // MARK: - Bridging helpers
