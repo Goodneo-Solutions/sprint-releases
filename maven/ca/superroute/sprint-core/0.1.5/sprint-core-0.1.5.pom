@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>ca.superroute</groupId>
+  <artifactId>sprint-core</artifactId>
+  <version>0.1.5</version>
+  <packaging>aar</packaging>
+  <name>sprint-core</name>
+  <description>sPrint: Superroute's printing SDK.</description>
+  <url>https://github.com/Goodneo-Solutions/sprint-releases</url>
+  <organization>
+    <name>Superroute</name>
+    <url>https://superroute.ca</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>Superroute SDK License</name>
+      <url>https://open.superroute.ca/developer/license</url>
+    </license>
+  </licenses>
+</project>

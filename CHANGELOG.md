@@ -1,3 +1,19 @@
+# 0.1.5
+
+## Printing
+
+### Every package except the browser
+- **Print node follows the server's printer settings**: languages locked on the Print Nodes page can no longer be changed on the device, a language an administrator picks is applied, and a printer's default paper is used for any job that names none. These settings are kept across restarts.
+- **Language picks sent to the server**: a language chosen on the device is sent to the server; on a locked printer only a correction goes through.
+- **Remote commands for the host app**: the app can take over the server's remote commands it handles itself and answer them.
+- **Printing status**: the app is told when a job starts and finishes printing, whether it came from the server or from a peer.
+- **Printer details in the heartbeat**: the app can add details of its own to each printer's report.
+- **Command check interval**: how often the node checks for remote commands can be set.
+- **Label size from Zebra printers**: read a ZPL printer's resolution and loaded label size.
+
+### Flutter
+- **Android build**: the plugin no longer applies the Kotlin Gradle plugin itself.
+
 # 0.1.2
 
 ## Printing

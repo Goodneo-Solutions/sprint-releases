@@ -11,14 +11,32 @@ public enum NodeEvent: Sendable {
     case log(String)
     /// A protocol sweep the node runs changed (show Next / Stop / choose).
     case sweep(SweepView)
+    /// What the server holds for the node's printers changed (already applied).
+    case settings(PrinterSettings)
+    /// A cloud or peer job started or ended printing.
+    case printing(PrintingEvent)
 }
+
+/// A host's answer to a remote command: nil lets the node answer it itself;
+/// a thrown error fails the command with its text.
+public typealias NodeCommandHandler = @Sendable (NodeCommand) async throws -> CommandAnswer?
 
 /// The receiver of the core's event callback: the user pointer the C side
 /// carries points at it.
 private final class EventSink: @unchecked Sendable {
     let continuation: AsyncStream<NodeEvent>.Continuation
+    let onCommand: NodeCommandHandler?
+    private let lock = NSLock()
+    private var _handle: Int64 = 0
+    var handle: Int64 {
+        get { lock.lock(); defer { lock.unlock() }; return _handle }
+        set { lock.lock(); _handle = newValue; lock.unlock() }
+    }
 
-    init(_ c: AsyncStream<NodeEvent>.Continuation) { continuation = c }
+    init(_ c: AsyncStream<NodeEvent>.Continuation, onCommand: NodeCommandHandler?) {
+        continuation = c
+        self.onCommand = onCommand
+    }
 
     struct Raw: Decodable {
         var type: String
@@ -27,11 +45,38 @@ private final class EventSink: @unchecked Sendable {
         var result: PrintResult?
         var message: String?
         var sweep: SweepView?
+        var settings: PrinterSettings?
+        var printing: PrintingEvent?
+        var request: Int64?
+        var command: NodeCommand?
+    }
+
+    struct Answer: Encodable {
+        var handled: Bool
+        var output: String?
+        var error: String?
+    }
+
+    func answer(_ request: Int64, _ command: NodeCommand) {
+        guard let onCommand else { return }
+        Task.detached { [self] in
+            var a = Answer(handled: false)
+            do {
+                if let r = try await onCommand(command) { a = Answer(handled: true, output: r.output, error: r.error) }
+            } catch {
+                a = Answer(handled: true, error: (error as? SPrintError)?.message ?? "\(error)")
+            }
+            let js = (try? Bridge.json(a)) ?? "{}"
+            _ = Bridge.take(sprint_node_command_answer(self.handle, request, js))
+        }
     }
 
     func receive(_ json: String) {
         guard let ev = try? Bridge.decode(Raw.self, json) else { return }
         switch ev.type {
+        case "settings": if let s = ev.settings { continuation.yield(.settings(s)) }
+        case "printing": if let p = ev.printing { continuation.yield(.printing(p)) }
+        case "command": if let r = ev.request, let c = ev.command { answer(r, c) }
         case "state": if let s = ev.state { continuation.yield(.state(s)) }
         case "job": if let r = ev.result { continuation.yield(.job(id: ev.job_id ?? 0, result: r)) }
         case "log": if let m = ev.message { continuation.yield(.log(m)) }
@@ -58,25 +103,38 @@ public final class PrintNode: @unchecked Sendable {
     /// The node's events, in order.
     public let events: AsyncStream<NodeEvent>
 
+    /// - Parameters:
+    ///   - commandsEvery: how often remote commands are polled (default 30 s; MQTT push makes it a fallback).
+    ///   - commandTimeout: how long the node waits for `onCommand` (default 30 s; then it answers itself).
+    ///   - onCommand: answers remote commands before the node does (`connectivity_test`,
+    ///     `restart_agent`, or an override of a built-in one); return nil to let the node answer.
     public init(registry: PrinterRegistry, state: NodeState? = nil, device: DeviceInfo? = nil,
-                agentVersion: String? = nil, reportSystemQueues: Bool = true) throws {
+                agentVersion: String? = nil, reportSystemQueues: Bool = true,
+                commandsEvery: TimeInterval? = nil, commandTimeout: TimeInterval? = nil,
+                onCommand: NodeCommandHandler? = nil) throws {
         struct Config: Encodable {
             var state: NodeState?
             var device: DeviceInfo?
             var agent_version: String?
             var report_system_queues: Bool
+            var command_hook: Bool
+            var command_timeout_ms: Int?
+            var commands_every_ms: Int?
         }
         var cont: AsyncStream<NodeEvent>.Continuation!
         events = AsyncStream(bufferingPolicy: .bufferingNewest(1000)) { cont = $0 }
-        sink = EventSink(cont)
+        sink = EventSink(cont, onCommand: onCommand)
         self.registry = registry
+        let ms: (TimeInterval?) -> Int? = { $0.map { Int(($0 * 1000).rounded()) } }
         let config = try Bridge.json(Config(state: state, device: device, agent_version: agentVersion,
-                                            report_system_queues: reportSystemQueues))
+                                            report_system_queues: reportSystemQueues, command_hook: onCommand != nil,
+                                            command_timeout_ms: ms(commandTimeout), commands_every_ms: ms(commandsEvery)))
         var err: UnsafeMutablePointer<CChar>?
         let h = sprint_node_new(config, registry.handle, eventCallback,
                                 Unmanaged.passUnretained(sink).toOpaque(), &err)
         if h == 0 { throw Bridge.error(err) }
         handle = h
+        sink.handle = h
     }
 
     deinit {
@@ -121,5 +179,40 @@ public final class PrintNode: @unchecked Sendable {
         let r = try Bridge.decode(R.self, Bridge.take(sprint_node_sweep_press(handle, sweep, action, language ?? "")))
         if !r.ok { throw SPrintError(message: r.error ?? "sweep press failed") }
         return r.state ?? SweepState()
+    }
+
+    /// What the server holds for the node's printers (languages, locks, default papers).
+    public func printerSettings() throws -> PrinterSettings {
+        try Bridge.decode(PrinterSettings.self, Bridge.take(sprint_node_printer_settings(handle)))
+    }
+
+    /// Sends languages chosen on this device (printer → language, "auto" drops
+    /// the operator's choice) and applies them here. Printers in `corrections`
+    /// carry the post-job check's answer, accepted even on a locked printer;
+    /// any other change of a locked printer is refused. Returns the refused printers.
+    @discardableResult
+    public func pushLanguages(_ languages: [String: String], corrections: [String] = []) throws -> [String] {
+        struct R: Decodable { var ok: Bool?; var refused: [String]?; var error: String? }
+        let r = try Bridge.decode(R.self, Bridge.take(sprint_node_push_languages(handle, try Bridge.json(languages),
+                                                                                  try Bridge.json(corrections))))
+        if r.ok != true { throw SPrintError(message: r.error ?? "sprint: push failed") }
+        return r.refused ?? []
+    }
+
+    /// Extra fields the heartbeat reports for a printer (`language_check`,
+    /// `language_kept`, …); nil or empty removes them.
+    public func setPrinterFields(_ printer: String, fields: [String: JSONValue]?) throws {
+        let js = (fields?.isEmpty ?? true) ? "" : try Bridge.json(fields)
+        try Bridge.check(Bridge.take(sprint_node_set_printer_fields(handle, printer, js)))
+    }
+
+    /// The same with any Encodable object as the fields.
+    public func setPrinterFields<T: Encodable>(_ printer: String, encoding fields: T) throws {
+        try Bridge.check(Bridge.take(sprint_node_set_printer_fields(handle, printer, try Bridge.json(fields))))
+    }
+
+    /// The jobs in flight (cloud jobs, and peer jobs printed through the registry).
+    public func printing() throws -> [PrintingEvent] {
+        try Bridge.decode([PrintingEvent].self, Bridge.take(sprint_node_printing(handle)))
     }
 }

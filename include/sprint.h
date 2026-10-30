@@ -93,6 +93,9 @@ SPRINT_API char* sprint_identify(const char* keys_json);   /* {"ok", "identity"}
 SPRINT_API char* sprint_probe(const char* target_json);
 /* The whole identification ladder without paper (device ID, model table, IPP, status): {"ok", "identity"}. */
 SPRINT_API char* sprint_identify_printer(const char* target_json);
+/* ZPL only, without paper: ~HI and ^HH. {"ok", "media": null | {dpi, width_mm, length_mm, width_dots,
+   length_dots}, "error"}; ok false when the printer did not answer (width/length 0 when it named no media). */
+SPRINT_API char* sprint_query_zpl_media(const char* target_json);
 /* Asks the printer, else prints one test line per language; first line "detected <language> …" when it answered. */
 SPRINT_API char* sprint_detect_language(const char* target_json);    /* {"ok", "probe": null | {language, evidence}} */
 /* Loads a model table revision (GET /api/odep/printer-models); returns the active revision. */
@@ -127,10 +130,15 @@ SPRINT_API int sprint_set_renderer(sprint_render_cb render, void* user);
 
 /* Print node */
 /* Events: {"type":"state","state":NodeState} (persist it), {"type":"job","job_id","result"},
-   {"type":"log","message"}, {"type":"sweep","sweep":SweepView} (a protocol sweep changed). */
+   {"type":"log","message"}, {"type":"sweep","sweep":SweepView} (a protocol sweep changed),
+   {"type":"settings","settings":{languages, locks, paper}} (the server's printer settings changed, applied),
+   {"type":"printing","printing":{state: started|ended, source: cloud|peer, job_id, peer, printer, at, result}},
+   {"type":"command","request":N,"command":{id, action, params}} (command_hook only: answer it with
+   sprint_node_command_answer). See docs/NODE-HOOKS.md. */
 typedef void (*sprint_event_cb)(const char* event_json, void* user);
 /* config_json: {"state": NodeState, "device": {...}, "agent_version": "...",
-   "report_system_queues": bool, "events_owned_by_host": bool}; "" for defaults.
+   "report_system_queues": bool, "events_owned_by_host": bool, "command_hook": bool,
+   "command_timeout_ms": int (30000), "commands_every_ms": int (30000)}; "" for defaults.
    The event string is valid during the callback only, unless events_owned_by_host
    is true: then the host frees it with sprint_free when it is done. */
 SPRINT_API long long sprint_node_new(const char* config_json, long long registry,
@@ -147,6 +155,19 @@ SPRINT_API char*     sprint_node_status(long long node);
 /* Protocol sweeps the node runs: JSON array of SweepView; a press is next | stop | choose. */
 SPRINT_API char*     sprint_node_sweeps(long long node);
 SPRINT_API char*     sprint_node_sweep_press(long long node, long long sweep, const char* action, const char* language);
+/* Command hook: answer a "command" event's request with {"handled": bool, "output", "error"};
+   handled false lets the node answer it. May be called inside the callback or later. {"ok","error"} */
+SPRINT_API char*     sprint_node_command_answer(long long node, long long request, const char* answer_json);
+/* What the server holds for the node's printers: {"languages", "locks": {name: {language, path}}, "paper"}. */
+SPRINT_API char*     sprint_node_printer_settings(long long node);
+/* Sends languages chosen here ({"printer": "zpl" | "auto"}) and applies them; corrections_json: a JSON
+   array of the printers whose value is the post-job check's answer (accepted on a locked printer).
+   {"ok", "refused": [...], "error"}. */
+SPRINT_API char*     sprint_node_push_languages(long long node, const char* languages_json, const char* corrections_json);
+/* Extra fields merged into a printer's heartbeat entry (language_check, language_kept); NULL or "" removes them. */
+SPRINT_API char*     sprint_node_set_printer_fields(long long node, const char* name, const char* fields_json);
+/* The jobs in flight: JSON array of {state, source, job_id, peer, printer, at}. */
+SPRINT_API char*     sprint_node_printing(long long node);
 SPRINT_API void      sprint_node_free(long long node);
 
 /* LAN peer printing (docs/LAN-PEER-DESIGN.md; peer-direct protocol 1.1.0, the
