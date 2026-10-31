@@ -1,3 +1,13 @@
+# 0.1.6
+
+## Fixes
+
+### Android and Flutter
+- **HTML printing on a busy device**: HTML pages are no longer refused as timed out while the device is still starting its web engine for the first time.
+
+### Every package except the browser
+- **Label size from Zebra printers**: the label size and resolution are read from printers that take longer to answer, as the SuperPrinter Android app did.
+
 # 0.1.5
 
 ## Printing
